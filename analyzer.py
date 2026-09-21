@@ -6,13 +6,14 @@ classifying intensity, checking for recovery, and formatting a report.
 from statistics import mean
 from models import Session, Observation
 
-# Thresholds for classification. Picked these based on roughly what
-# "resting" vs "moderate" vs "high" should look like relative to a
-# person's own resting/max heart rate, tuned against the sample data.
+# Thresholds for classification, expressed as how far average heart
+# rate sits above the participant's own baseline (the generator only
+# gives us a resting baseline, not a max heart rate, so classification
+# is offset-based rather than a fraction of some maximum).
 MIN_OBSERVATIONS_FOR_CLASSIFICATION = 3
-RESTING_HR_MARGIN = 1.15       # resting if avg HR <= resting_hr * this
+RESTING_HR_OFFSET = 15          # resting if avg HR <= baseline + this many bpm
 RESTING_ACTIVITY_CEILING = 0.30
-MODERATE_HR_FRACTION_OF_MAX = 0.70  # moderate if avg HR <= max_hr * this
+MODERATE_HR_OFFSET = 45         # moderate if avg HR <= baseline + this many bpm
 RECOVERY_WINDOW_FRACTION = 0.5      # compare first half vs second half
 RECOVERY_HR_DROP_FRACTION = 0.10    # >=10% HR drop counts as recovering
 RECOVERY_ACTIVITY_DROP_FRACTION = 0.20
@@ -60,12 +61,12 @@ def detect_recovery(valid_observations: list[Observation]) -> bool:
 
 def classify_intensity(
     valid_observations: list[Observation],
-    resting_heart_rate: float,
-    max_heart_rate: float,
+    baseline_heart_rate: float,
 ) -> str:
     """
     Work out whether a session was resting, moderate, high intensity,
-    recovering, or too short to say anything about.
+    recovering, or too short to say anything about, based on how far
+    average heart rate sits above the participant's own baseline.
     """
     if len(valid_observations) < MIN_OBSERVATIONS_FOR_CLASSIFICATION:
         return "insufficient data"
@@ -76,9 +77,9 @@ def classify_intensity(
     avg_hr = mean(o.heart_rate for o in valid_observations)
     avg_activity = mean(o.activity_level for o in valid_observations)
 
-    if avg_hr <= resting_heart_rate * RESTING_HR_MARGIN and avg_activity <= RESTING_ACTIVITY_CEILING:
+    if avg_hr <= baseline_heart_rate + RESTING_HR_OFFSET and avg_activity <= RESTING_ACTIVITY_CEILING:
         return "resting"
-    if avg_hr <= max_heart_rate * MODERATE_HR_FRACTION_OF_MAX:
+    if avg_hr <= baseline_heart_rate + MODERATE_HR_OFFSET:
         return "moderate activity"
     return "high activity"
 
@@ -123,8 +124,7 @@ class SessionAnalyzer:
 
         classification = classify_intensity(
             valid,
-            session.participant.resting_heart_rate,
-            session.participant.max_heart_rate,
+            session.participant.baseline_heart_rate,
         )
         recovery = detect_recovery(valid)
 

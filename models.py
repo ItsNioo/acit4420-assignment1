@@ -31,36 +31,53 @@ class Person:
 class Participant(Person):
     """
     A person who trains, with the personal baseline values their
-    sessions get compared against.
+    sessions get compared against. These come straight from the
+    profile dict the data generator returns for each participant.
     """
 
     def __init__(
         self,
         name: str,
         person_id: str,
-        resting_heart_rate: float,
-        max_heart_rate: float,
-        typical_activity_level: float,
+        baseline_heart_rate: float,
+        baseline_skin_response: float,
+        baseline_temperature: float,
     ):
         super().__init__(name, person_id)
-        self.resting_heart_rate = resting_heart_rate
-        self.max_heart_rate = max_heart_rate
-        self.typical_activity_level = typical_activity_level
+        self.baseline_heart_rate = baseline_heart_rate
+        self.baseline_skin_response = baseline_skin_response
+        self.baseline_temperature = baseline_temperature
 
     def __str__(self) -> str:
         return (
             f"{self.name} (ID: {self.person_id}) | "
-            f"resting HR: {self.resting_heart_rate} bpm, "
-            f"max HR: {self.max_heart_rate} bpm, "
-            f"typical activity: {self.typical_activity_level:.2f}"
+            f"baseline HR: {self.baseline_heart_rate} bpm, "
+            f"baseline skin response: {self.baseline_skin_response}, "
+            f"baseline temperature: {self.baseline_temperature} C"
+        )
+
+    @classmethod
+    def from_profile(cls, profile: dict) -> "Participant":
+        """
+        Build a Participant from the profile dict returned by
+        generate_fitness_data(). participant_id doubles as both the
+        display name and the ID since the generator doesn't supply a
+        separate name field.
+        """
+        return cls(
+            name=f"Participant {profile['participant_id']}",
+            person_id=profile["participant_id"],
+            baseline_heart_rate=profile["baseline_heart_rate"],
+            baseline_skin_response=profile["baseline_skin_response"],
+            baseline_temperature=profile["baseline_temperature"],
         )
 
     def reference_summary(self) -> dict:
         """Return the participant's reference values as a plain dict."""
         return {
-            "resting_heart_rate": self.resting_heart_rate,
-            "max_heart_rate": self.max_heart_rate,
-            "typical_activity_level": self.typical_activity_level,
+            "baseline_heart_rate": self.baseline_heart_rate,
+            "baseline_skin_response": self.baseline_skin_response,
+            "baseline_temperature": self.baseline_temperature,
         }
 
 
