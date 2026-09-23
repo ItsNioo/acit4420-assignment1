@@ -84,7 +84,7 @@ These thresholds are simple values I chose myself and checked against generator 
 The project only uses the Python standard library, so no extra packages are required beyond the supplied `data_generator.py`, which must stay in the same folder as the other files.
 
 ```bash
-git clone https://github.com/USERNAME/REPOSITORY.git
+git clone https://github.com/ItsNioo/acit4420-assignment1.git
 cd REPOSITORY
 python3 main.py
 ```
